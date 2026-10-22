@@ -1,30 +1,44 @@
+
+# When you hit Build button in Clion, it calls CMake which calls this CMakeLists.txt file
+# This CMakeLists.txt file tells CMake how to compile the code, link the libraries, and build the Executable
+
 # Mandatory line, sets the minimum version of CMake that should be used with this repository.
 # 3.22 is the minimum CMake version required by JUCE.
 # 3.25 is required for the MSVC_DEBUG_INFORMATION_FORMAT feature to work.
 # To verify your version run
 # $ cmake --version
+# If you don't have at least this version of Cmake installed, Cmake will throw an error and stop
 cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
 # Enable setting CMAKE_MSVC_DEBUG_INFORMATION_FORMAT
+# This is used when using Microsoft Windows C++ compiler
 set(CMAKE_POLICY_DEFAULT_CMP0141        NEW      CACHE STRING "" FORCE)
 
 # Sets the minimum deployment target
 # macOS 10.11 is the minimum required by JUCE
+#  This says that you need a minimum of Macos 10.11 to run this app
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.11" CACHE STRING "" FORCE)
+
 # Builds a binary that works on Apple Silicon (arm64) and Intel-based Macs
+#  This says for Macos that the target will be Mac Intel or Mac Silicon
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "" FORCE)
 
 # Sets a few variables, like PROJECT_NAME.
-project(JucePluginDevelopmentCourseTremoloPlugin)
+# The project here populates "JucePluginDevelopmentCourseTremoloPlugin" value into the $PROJECT_NAME and $CMAKE_PROJECT_NAME vars
+# Clion uses this name as its Project name when you Open Recents
+project(TodoJucePluginDevelopmentCourseTremoloPlugin)
 
 # Set the C++ standard only if this project is standalone;
 # otherwise, let clients decide.
+# This should be true since we are declaring the "project" in this file
 if(PROJECT_IS_TOP_LEVEL)
+  # CMAKE_CXX_STANDARD value will be passed as a compiler flag to your compiler telling it which C++ version it is targeting
   if (NOT CMAKE_CXX_STANDARD)
     # Always use the newest C++ standard on green-field projects if possible.
     set(CMAKE_CXX_STANDARD 23)
   endif()
 
+  # These are used for Microsoft C++ compiler
   # Links to C++ runtime statically
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   # Embeds debug information
@@ -34,12 +48,16 @@ endif()
 # I like to download the dependencies to the same folder as the project.
 # If you want to install them system-wide, set CPM_SOURCE_CACHE with a path to the dependencies
 # either as an environment variable or pass it with -DCPM_SOURCE_CACHE=<path> when invoking cmake.
+# This creates a LIB_DIR var and sets it to  ./libs dir  ( CMAKE_CURRENT_SOURCE_DIR is just current dir here )
 set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 # Downloads CPM if not already downloaded. CPM is an easy-to-use package manager nicely integrated with CMake.
+# This downloads the CPM package manager which we use to download project dependencies like JUCE
 include(cmake/cpm.cmake)
 
 # This commands downloads AND configures JUCE. It sets up some variables, like JUCE_SOURCE_DIR.
+# This downloads the CPM package manager so we can download any dependencies are project needs like JUCE
+# Here we download JUCE into our /lib/juce folder
 cpmaddpackage(
   NAME
     JUCE
@@ -52,6 +70,7 @@ cpmaddpackage(
 )
 
 # Adds compiler warning utilities & other.
+# This
 include(cmake/CompilerWarnings.cmake)
 include(cmake/Util.cmake)
 
@@ -61,20 +80,23 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   set_directory_properties(PROPERTIES JUCE_VST3_COPY_DIR "$ENV{LOCALAPPDATA}/Programs/Common/VST3")
 endif()
 
+# This tells JUCE all the info about your Plugin
+# This will be the name of your Artefact folder (called a Bundle) binary that will be deployed to  ~/Library/Audio/Plug-Ins/VST3   on Macos
 # Adds a plugin target.
-set(TREMOLO_PLUGIN_NAME "TODO: set your plugin name")
+# NOTE that if COPY_PLUGIN_AFTER_BUILD = TRUE and you've made changes, running a Build will automatically copy your VST3 Artefact bundler/folder to   ~/Library/Audio/Plug-Ins/VST3  on Macos in your Home dir
+set(TREMOLO_PLUGIN_NAME "mitchTremoloPlugin")
 juce_add_plugin(
   TremoloCoursePlugin
   PRODUCT_NAME
     ${TREMOLO_PLUGIN_NAME}
   VERSION
-    # TODO: add version
+    0.0.0
   COMPANY_NAME
-    # TODO: add company
+    MitchCompany
   PLUGIN_MANUFACTURER_CODE
-    # TODO: add plugin manufacturer code
+    Mtch
   PLUGIN_CODE
-    # TODO: add plugin code
+    Mtpg
   FORMATS
     Standalone
     AU
@@ -88,7 +110,7 @@ juce_add_plugin(
   VST3_AUTO_MANIFEST
     FALSE
   COPY_PLUGIN_AFTER_BUILD
-    FALSE
+    TRUE
 )
 
 # Configures the JUCE sources included in the plugin target.
