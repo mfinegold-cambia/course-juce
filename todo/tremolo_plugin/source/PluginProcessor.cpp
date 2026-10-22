@@ -50,6 +50,7 @@ void PluginProcessor::changeProgramName(int index,
   juce::ignoreUnused(index, newName);
 }
 
+// Juce passes in the expectedMaxFramesPerBlock, which is the Maximum number of samples you can expect to get in the AudioBuffer, but not necessarily the actual number of samples in the AudioBuffer
 void PluginProcessor::prepareToPlay(double sampleRate,
                                     int expectedMaxFramesPerBlock) {
   // Use this method as the place to do any pre-playback

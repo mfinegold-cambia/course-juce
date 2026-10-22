@@ -24,6 +24,7 @@ void extractLfo(Tremolo& tremolo, juce::AudioBuffer<float>& bufferToUse) {
  * The LFO rate is not changed; thus, the one set in Tremolo's constructor will
  * be used.
  */
+    // TEST is a gtest, which is an open source C++ testing framework by Google
 TEST(Tremolo, ExtractLfo) {
   for (const auto lfoWaveform :
        {Tremolo::LfoWaveform::sine, Tremolo::LfoWaveform::triangle}) {
