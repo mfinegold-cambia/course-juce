@@ -35,6 +35,7 @@ public:
 
 private:
   // Parameters constructor takes a ref to the juce::AudioProcessor
+  // Here we Dereference this AudioProcessor class pass it to the Parameters Struct constructor as a reference
   Parameters parameters{*this};
 
   Tremolo tremolo;

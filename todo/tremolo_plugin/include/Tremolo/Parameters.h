@@ -5,6 +5,7 @@ namespace tremolo {
 struct Parameters {
 
   // explicit is used on single arg constructors and is a good practice
+  // This is the Constructor definition for the Parameters Struct
   explicit Parameters(juce::AudioProcessor&);
 
   juce::AudioParameterFloat& rate;

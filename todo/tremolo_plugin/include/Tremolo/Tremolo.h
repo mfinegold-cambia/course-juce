@@ -44,6 +44,17 @@ public:
     lfoToSet = waveform;
   }
 
+  // This is called at the top of PluginProcessor processBlock
+  // This has the latest Parameter modulation rate valuefrom the GUI, and here we directly Update the juce Oscillator freq value to it to actually make the change that we can hear
+  void setModulationRate(float rateHz) {
+    for (auto& lfo : lfos) {
+      // lfo is the juce Oscillator setFrequency call here
+      // if the 2nd arg is false, it uses built-in smoothing to ensure changing the freq smoothly changes from old value to new value
+      // So we don't have to implement smoothing ourselves when lfo freq changes
+      lfo.setFrequency(rateHz, false);
+    }
+  }
+
   // Host calls process when it has a new Block of samples to pass for processing
   // buffer.getNumSamples() is usually 512, that means the common Block size passed from the DAW to our plugin is usually 512 samples
   void process(juce::AudioBuffer<float>& buffer) noexcept {

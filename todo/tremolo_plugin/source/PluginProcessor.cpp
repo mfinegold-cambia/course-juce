@@ -103,10 +103,14 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     buffer.clear(channelToClear, 0, buffer.getNumSamples());
   }
 
-  // TODO: update parameters
+  // PluginProcessor.h has access to both the Tremelo.h class and the Parameters Struct
+  // Here we take the latest Parameters val for modulation rate and pass it to tremolo.setModulationRate which actually updates the juce Oscillator value
+  // The Parameter rate is an AudioParameterFloat& reference.  The juce AudioParameterFloat class has a get() method that returns the current selected value of it in the GUI
+   tremolo.setModulationRate(parameters.rate.get());
+
   // TODO: check for bypass
 
-  // apply tremolo
+  // apply  tremolo
   tremolo.process(buffer);
 }
 

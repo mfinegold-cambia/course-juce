@@ -1,4 +1,5 @@
 /*
+ *  This is the Juce Module Header file, its name must match the enclosing folder name ( "tremolo_plugin")
 ==============================================================================
 
 BEGIN_JUCE_MODULE_DECLARATION

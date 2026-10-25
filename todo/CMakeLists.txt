@@ -113,7 +113,8 @@ juce_add_plugin(
     TRUE
 )
 
-# Configures the JUCE sources included in the plugin target.
+# Configures the JUCE sources included in the plugin Target.
+# Here you say TremoloCoursePlugin will be the name of the build Target folder in the cmake-build-debug folder - this will have subfolders for AU, Standalone, and VST artefacts
 target_compile_definitions(TremoloCoursePlugin
   PRIVATE
     JUCE_WEB_BROWSER=0
@@ -134,6 +135,9 @@ juce_add_binary_data(tremolo_plugin_assets
 
 add_library(tremolo::tremolo_plugin_assets ALIAS tremolo_plugin_assets)
 
+# Registers the juce custom Module
+# Creates a CMake target named after the folder
+#  The name "tremolo_plugin" means that the enclosing folder is called "tremolo_plugin" with a header file in it named "tremolo_plugin.h"
 juce_add_module(tremolo_plugin ALIAS_NAMESPACE tremolo)
 
 # Additional definitions required by all users of this module.
@@ -147,6 +151,9 @@ target_compile_options(tremolo_plugin INTERFACE "${PROJECT_WARNINGS_CXX}")
 
 target_link_libraries(tremolo_plugin INTERFACE tremolo::tremolo_plugin_assets)
 
+#  This says which libs should be linked to the build Target called TremoloCoursePlugin ( referenced in target_compile_definitions )
+#  This says all the Includes in tremolo_plugin.h should be Linked to the build Target called TremoloCoursePlugin
+#  It tells the Linker which libs should be linked to your build Target when building the Executable file
 target_link_libraries(
   TremoloCoursePlugin
   PRIVATE
@@ -156,6 +163,8 @@ target_link_libraries(
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags
 )
+
+
 
 # In Visual Studio this command provides a nice grouping of source files in "filters".
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/..)
