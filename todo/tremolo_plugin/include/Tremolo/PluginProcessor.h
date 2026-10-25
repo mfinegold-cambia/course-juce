@@ -34,7 +34,8 @@ public:
   void setStateInformation(const void* data, int sizeInBytes) override;
 
 private:
-  // TODO: add parameters
+  // Parameters constructor takes a ref to the juce::AudioProcessor
+  Parameters parameters{*this};
 
   Tremolo tremolo;
 

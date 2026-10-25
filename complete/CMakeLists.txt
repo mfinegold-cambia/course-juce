@@ -15,7 +15,7 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "10.11" CACHE STRING "" FORCE)
 set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "" FORCE)
 
 # Sets a few variables, like PROJECT_NAME.
-project(JucePluginDevelopmentCourseTremoloPlugin)
+project(CompleteJucePluginDevelopmentCourseTremoloPlugin)
 
 # Set the C++ standard only if this project is standalone;
 # otherwise, let clients decide.
