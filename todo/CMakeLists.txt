@@ -26,7 +26,7 @@ set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "" FORCE)
 # Sets a few variables, like PROJECT_NAME.
 # The project here populates "JucePluginDevelopmentCourseTremoloPlugin" value into the $PROJECT_NAME and $CMAKE_PROJECT_NAME vars
 # Clion uses this name as its Project name when you Open Recents
-project(TodoJucePluginDevelopmentCourseTremoloPlugin)
+project(TodoJucePluginDevelopmentCourseTremoloPlugin VERSION 1.0.0)
 
 # Set the C++ standard only if this project is standalone;
 # otherwise, let clients decide.
@@ -177,3 +177,7 @@ if(BUILD_TESTS)
   # Adds all the targets configured in the "test" folder.
   add_subdirectory(test)
 endif()
+
+
+# Tell CMake to Build juce AudioPluginHost as part of our Tremolo build
+set(JUCE_BUILD_EXTRAS ON CACHE INTERNAL "")
