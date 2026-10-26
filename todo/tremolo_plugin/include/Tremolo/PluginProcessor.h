@@ -17,6 +17,7 @@ public:
 
   const juce::String getName() const override;
 
+  // The const after params says we CAN'T Change the argument object in this function, we are saying this method is READ-ONLY
   bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
 
   bool acceptsMidi() const override;
@@ -32,6 +33,12 @@ public:
 
   void getStateInformation(juce::MemoryBlock& destData) override;
   void setStateInformation(const void* data, int sizeInBytes) override;
+
+  // getBypassParameter is a method in the juce AudioProcessor class
+  // here we are overriding it to tell JUCE that we are implementing our own Bypass param and don't need the JUCE provided one
+  // This returns our AudioProcessorBool that controls the Bypass state
+  // The const after it says this function is READ-ONLY, we will not be changing any state
+  juce::AudioProcessorParameter* getBypassParameter() const override;
 
 private:
   // Parameters constructor takes a ref to the juce::AudioProcessor

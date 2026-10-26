@@ -108,7 +108,9 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   // The Parameter rate is an AudioParameterFloat& reference.  The juce AudioParameterFloat class has a get() method that returns the current selected value of it in the GUI
    tremolo.setModulationRate(parameters.rate.get());
 
-  // TODO: check for bypass
+   // If the Bypass On/Off button in GUI is set to On, then we short circuit this function and don't do our Tremolog processing
+   if (parameters.bypass.get())
+     return;
 
   // apply  tremolo
   tremolo.process(buffer);
@@ -140,7 +142,20 @@ void PluginProcessor::setStateInformation(const void* data, int sizeInBytes) {
 
   // TODO: implement state deserialization from JSON
 }
+
+// getBypassParameter is a method in the juce AudioProcessor class that we declared in PluginProcessor.h,
+// here we are overriding it to tell JUCE that we are implementing our own Bypass param and don't need the JUCE provided one
+// This returns our AudioProcessorBool that we created to control the Bypass state
+juce::AudioProcessorParameter* PluginProcessor::getBypassParameter() const {
+  // We return a reference to our Bypass AudioParameterBool object that is in the AudioProcessor.  It has the current state of the On/Off Bypass button in the GUI
+  return &parameters.bypass;
+}
+
+
 }  // namespace tremolo
+
+
+
 
 // This creates new instances of the plugin.
 // This function definition must be in the global namespace.

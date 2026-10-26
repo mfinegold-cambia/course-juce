@@ -179,5 +179,7 @@ if(BUILD_TESTS)
 endif()
 
 
-# Tell CMake to Build juce AudioPluginHost as part of our Tremolo build
+# Tell CMake to Build the juce AudioPluginHost executable as part of our Tremolo build
+# It puts the AudioPluginHost  Bundle at /Documents/course-juce/todo/cmake-build-debug/_deps/juce-build/extras/AudioPluginHost/AudioPluginHost_artefacts/Debug/AudioPluginHost.app/Contents/MacOS
+# In the Run/Debug edit configuration, in Executable dropdown, we select AudioPluginHost so that it runs everytime our Tremolo project is Run
 set(JUCE_BUILD_EXTRAS ON CACHE INTERNAL "")
