@@ -57,13 +57,25 @@ void PluginProcessor::prepareToPlay(double sampleRate,
   // initialization that you need, e.g., allocate memory.
 
   tremolo.prepare(sampleRate, expectedMaxFramesPerBlock);
+
+  // You can use Aggregate Inititalizion for a Struct in curly braces - you don't have to explicilty create the ProcessSpec Struct instance first before setting its values
+  bypassTransitionSmoother.prepare( {
+    .sampleRate = sampleRate,
+    // cast expectedMaxFramesPerBlock from an int to the juce::unit32 needed by ProcessSpec
+    .maximumBlockSize = static_cast<juce::uint32>(expectedMaxFramesPerBlock),
+    // Here we use juce jmax to select whichever is bigger, intput channels or output channels ( but typically they are the same number )
+    .numChannels = static_cast<juce::uint32>(
+      juce::jmax(getTotalNumInputChannels(), getTotalNumOutputChannels())),
+  });
+
 }
+
 
 void PluginProcessor::releaseResources() {
   // When playback stops, you can use this as an opportunity to free up any
   // spare memory, etc.
-
   tremolo.reset();
+  bypassTransitionSmoother.reset();
 }
 
 bool PluginProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const {
@@ -108,9 +120,12 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   // The Parameter rate is an AudioParameterFloat& reference.  The juce AudioParameterFloat class has a get() method that returns the current selected value of it in the GUI
    tremolo.setModulationRate(parameters.rate.get());
 
-   // If the Bypass On/Off button in GUI is set to On, then we short circuit this function and don't do our Tremolog processing
-   if (parameters.bypass.get())
+   bypassTransitionSmoother.setBypass(parameters.bypass.get());
+
+   // If the Bypass On/Off button in GUI is set to On and Bypass transitioning is done, then we short circuit this function and don't do our Tremolo processing
+   if (parameters.bypass.get() && !bypassTransitionSmoother.isTransitioning()) {
      return;
+   }
 
   // apply  tremolo
   tremolo.process(buffer);

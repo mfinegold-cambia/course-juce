@@ -55,18 +55,35 @@ namespace tremolo {
  */
 class BypassTransitionSmoother {
 public:
+
+  // Since this Constructor only has 1 parameter, we mark it as explicit, as a best practice
+  // We inititalize the crossfade length to 10ms
   explicit BypassTransitionSmoother(double crossfadeLengthSecondsValue = 0.01)
       : crossfadeLengthSeconds{crossfadeLengthSecondsValue} {
+
+    // juce jassert method to error out if we pass in a negative crossfadeLengthSeconds value
     jassert(0.0 < crossfadeLengthSeconds);
   }
 
+
   void prepare(const juce::dsp::ProcessSpec& spec) {
+
     sampleRateHz = spec.sampleRate;
+
+    // Inititalize the new AudioBuffer with number of channels, and max number of samples
+    // ProcessSpec passes the num samples and num channels as uint32 so we cast them to int since AudioBuffer setSize requires int
     dryBuffer.setSize(static_cast<int>(spec.numChannels),
                       static_cast<int>(spec.maximumBlockSize));
+
+    // juce LinearSmoothedValue reset method takes the sample rate and the crossfade length in seconds
+    // it calculates how many audio samples are needed to complete a transition over the time period of crossfadeLengthSeconds
+    // crossfadeLengthSeconds is inititalized to 0.01 ( 15 ms )
     dryGain.reset(spec.sampleRate, crossfadeLengthSeconds);
+    // juce LinearSmoothedValue reset method takes the sample rate and the crossfade length in seconds
+    // it calculates how many audio samples are needed to complete a transition over the time period of crossfadeLengthSeconds
     wetGain.reset(spec.sampleRate, crossfadeLengthSeconds);
   }
+
 
   void setBypass(bool bypass) noexcept {
     const auto current = dryGain.getCurrentValue();
@@ -114,15 +131,23 @@ public:
   }
 
   void reset() noexcept {
+
     setBypassForced(false);
+    // Clears all samples out of our all channels of our dry AudioBuffer
     dryBuffer.clear();
   }
 
 private:
+
   double crossfadeLengthSeconds = 0.0;
   double sampleRateHz = 0.0;
+
+  // Create an instance of juce LinearSmoothedValue and initialize it to 0.f
   juce::LinearSmoothedValue<float> dryGain{0.f};
+  // Create an instance of juce LinearSmoothedValue and initialize it to 1.f
   juce::LinearSmoothedValue<float> wetGain{1.f};
+
+  // Create a new instance of juce AudioBuffer
   juce::AudioBuffer<float> dryBuffer;
 };
 }  // namespace tremolo

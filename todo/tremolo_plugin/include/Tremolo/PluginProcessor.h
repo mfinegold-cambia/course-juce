@@ -45,6 +45,8 @@ private:
   // Here we Dereference this AudioProcessor class pass it to the Parameters Struct constructor as a reference
   Parameters parameters{*this};
 
+  BypassTransitionSmoother bypassTransitionSmoother;
+
   Tremolo tremolo;
 
   JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
