@@ -154,15 +154,18 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor() {
   return nullptr;
 }
 
-// Host calls this when it wants the Plugin to Save its State
-// juce MemoryBlock holds a block of raw bytes and is Resizable
-  // You should use this method to store your parameters in the memory block.
+
+// Host calls this when it wants the Plugin to Save its State, usually it's when the user Saves the DAW project or closes the project, but varies by DAW host
+// Host passes a reference to an empty juce MemoryBlock, and we are supposed to populate it with our Plugin State ( as a raw byte array )
+// After we populate the MemoryBlock, the DAW host takes the populated MemoryBlock destData and stores the data in its DAW project file ( we don't store it in our Plugin )
 void PluginProcessor::getStateInformation(juce::MemoryBlock& destData) {
 
   // Creates an OutputStream for writing into the destData MemoryBlock
+  // The MemoryOutputStream at this points as the empty MemoryBlock, the "true" means we will Append data to the existing MemoryBlock ( instead of overwriting what's in there )
   juce::MemoryOutputStream memoryOutputStream(destData, true);
 
   // We pass a reference to the Parameters Struct and the MemoryOutputStream we created ( which is an concrete impl of the abstract juce OutputStream )
+  // Note that serialize is a static method so we can directoly instead of having to create an instance of JsonSerializer first
   JsonSerializer::serialize(parameters, memoryOutputStream);
 }
 
