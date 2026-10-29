@@ -4,6 +4,7 @@ namespace tremolo {
 class Tremolo {
 public:
 
+  // The Enum class colon here means size_t is the underlying type, it does NOT mean extends
   enum class LfoWaveform : size_t {
     sine = 0,
     triangle = 1,
@@ -41,6 +42,7 @@ public:
   void setLfoWaveform(LfoWaveform waveform) {
     // jassert is a Juce assertion that will only run on Debug builds
     jassert(waveform == LfoWaveform::sine || waveform == LfoWaveform::triangle);
+
     lfoToSet = waveform;
   }
 
@@ -71,6 +73,11 @@ public:
         //   These samples are data points that are at the peak, trough or ramp of the waveform
         // Generate the LFO value (call juce Oscillator processSample ) on the Currently selected LFO ( either Sine or Triangle )
         const auto lfoValue = getNextLfoValue();
+
+        if (frameIndex < 10) {
+         // DBG(" the next val is " << lfoValue);
+        }
+
         // constexpr means the variable value is calculated at compile time ( not runtime ).  We can do this by initializing it with the floating point literal like this
         // The constexpr can optimize the compiler
         // The modulation depth is the amount of Amplitude that the LFO waveform should have
@@ -84,6 +91,8 @@ public:
         // get the input sample
         // The inputSample value will always be 0 if the Host is not passing any audio in the AudioBuffer, there are 512 values of 0 in a Block passed from the Host
         const auto inputSample = buffer.getSample(channelIndex, frameIndex);
+
+        //DBG("Input sample before processing is " << inputSample);
 
         // This is where we Change the inputSample from the Host by multiplying it by the LFO sample val
         const auto outputSample = inputSample * modulationValue;

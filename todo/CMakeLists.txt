@@ -141,6 +141,7 @@ add_library(tremolo::tremolo_plugin_assets ALIAS tremolo_plugin_assets)
 juce_add_module(tremolo_plugin ALIAS_NAMESPACE tremolo)
 
 # Additional definitions required by all users of this module.
+# Adding the TREMOLO_PLUGIN_NAME var to the target_compile_definitions makes the var accessible in your C++ application code ( added as a Preprocessor definition )
 target_compile_definitions(tremolo_plugin
   INTERFACE
     TREMOLO_PLUGIN_NAME="${TREMOLO_PLUGIN_NAME}"

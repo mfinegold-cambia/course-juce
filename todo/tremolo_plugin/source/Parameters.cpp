@@ -23,6 +23,7 @@ namespace tremolo {
 
       // Create a unique pointer on the Stack to a new AudioParameterFloat instance on the Heap and populate the object
       // So make_unique creates 2 objects, a pointer var on the Stack and an object instance on the Heap
+      // By default juce AudioParameterFloat creates a Slider on the GUI
       auto parameter = std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID{ "modulation.rate", versionHint } ,
         "Modulation Rate",
@@ -57,6 +58,19 @@ namespace tremolo {
 
     }
 
+    juce::AudioParameterChoice& createWaveformParameter(juce::AudioProcessor& processor) {
+      constexpr auto versionHint = 1;
+
+      auto parameter = std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID{ "modulation.waveform", versionHint},
+        "Modulation Waveform",
+        juce::StringArray{ "Sine", "Triangle"},
+        // Default index on GUI,  0 is the index of the Sine in our enum
+        0);
+
+      return addParameterToProcessor(processor, std::move(parameter));
+    }
+
   } // end namespace general
 
    // Parameters is a Struct
@@ -65,8 +79,10 @@ Parameters::Parameters(juce::AudioProcessor& processor)
 
   // Note that the Colon here is the Constructor inititalizer symbol instead of an Inheritance symbol since it's after the Constructor, not class
   // When PluginProcessor.h is created, it creates an instance of the Parameters.h Struct, and sets its modulation rate param to the AudioParameterFloat for modulatation rate
+  // createModulationRateParameter creates the juce AudioParameterFloat object and returns a reference to it that "rate" var uses
   : rate { createModulationRateParameter(processor) },
-    bypass{ createBypassParameter(processor)}
+    bypass{ createBypassParameter(processor)},
+    waveform{ createWaveformParameter(processor)}
 {
 
 }

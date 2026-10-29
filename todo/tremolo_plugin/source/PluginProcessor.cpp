@@ -96,6 +96,8 @@ bool PluginProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const {
   return true;
 }
 
+
+// This is always getting called repeatedly with a AudioBuffer of 512 samples even if Host is not Sending audio
 void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
                                    juce::MidiBuffer& midiMessages) {
   juce::ignoreUnused(midiMessages);
@@ -104,22 +106,30 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
   const auto totalNumInputChannels = getTotalNumInputChannels();
   const auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+
+
   // In case we have more outputs than inputs, this code clears any output
   // channels that didn't contain input data, (because these aren't
   // guaranteed to be empty - they may contain garbage).
   // This is here to avoid people getting screaming feedback
   // when they first compile a plugin, but obviously you don't need to keep
   // this code if your algorithm always overwrites all the output channels.
-  for (const auto channelToClear :
-       std::views::iota(totalNumInputChannels, totalNumOutputChannels)) {
+  for (const auto channelToClear : std::views::iota(totalNumInputChannels, totalNumOutputChannels)) {
     buffer.clear(channelToClear, 0, buffer.getNumSamples());
   }
+
+  //DBG(" num of samples in Audiobuffer is " << buffer.getNumSamples());
 
   // PluginProcessor.h has access to both the Tremelo.h class and the Parameters Struct
   // Here we take the latest Parameters val for modulation rate and pass it to tremolo.setModulationRate which actually updates the juce Oscillator value
   // The Parameter rate is an AudioParameterFloat& reference.  The juce AudioParameterFloat class has a get() method that returns the current selected value of it in the GUI
    tremolo.setModulationRate(parameters.rate.get());
+   // parameters.waveform is the ref to the AudioParameterChoice object, which is a choice of Sine or Triangle LFO on the GUI, so we get the Index of what the User selected
+   // We are able to cast the AudioParameterChoice index value to our LfoWaveform Enum since indexes match ( we ordered them as Sine, Triangle in both )
+   tremolo.setLfoWaveform(static_cast<Tremolo::LfoWaveform>(parameters.waveform.getIndex()));
 
+
+  // We pass the current Bypass param value on the GUI to the bypassTransitionSmoother setBypass method
    bypassTransitionSmoother.setBypass(parameters.bypass.get());
 
    // If the Bypass On/Off button in GUI is set to On and Bypass transitioning is done, then we short circuit this function and don't do our Tremolo processing
@@ -127,8 +137,12 @@ void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer,
      return;
    }
 
+  bypassTransitionSmoother.setDryBuffer(buffer);
+
   // apply  tremolo
   tremolo.process(buffer);
+
+  bypassTransitionSmoother.mixToWetBuffer(buffer);
 }
 
 bool PluginProcessor::hasEditor() const {
@@ -140,22 +154,36 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor() {
   return nullptr;
 }
 
-void PluginProcessor::getStateInformation(juce::MemoryBlock& destData) {
+// Host calls this when it wants the Plugin to Save its State
+// juce MemoryBlock holds a block of raw bytes and is Resizable
   // You should use this method to store your parameters in the memory block.
-  // You could do that either as raw data, or use the XML or ValueTree classes
-  // as intermediaries to make it easy to save and load complex data.
-  juce::ignoreUnused(destData);
+void PluginProcessor::getStateInformation(juce::MemoryBlock& destData) {
 
-  // TODO: implement state serialization to JSON
+  // Creates an OutputStream for writing into the destData MemoryBlock
+  juce::MemoryOutputStream memoryOutputStream(destData, true);
+
+  // We pass a reference to the Parameters Struct and the MemoryOutputStream we created ( which is an concrete impl of the abstract juce OutputStream )
+  JsonSerializer::serialize(parameters, memoryOutputStream);
 }
 
-void PluginProcessor::setStateInformation(const void* data, int sizeInBytes) {
-  // You should use this method to restore your parameters from this memory
-  // block, whose contents will have been created by the getStateInformation()
-  // call.
-  juce::ignoreUnused(data, sizeInBytes);
 
-  // TODO: implement state deserialization from JSON
+  // Host calls this when it wants our Plugin to load and restore its State
+  // void* is a pointer to a block of raw Bytes in Memory, it doesn't know what type of data those bytes are ( doesn't know if it's float, int, or other type )
+  // Since it's const, we can't modify the memory it points to
+  // sizeInBytes is the size of the bytes in Memory that the data  points to
+  // You should use this method to restore your parameters from this memory
+void PluginProcessor::setStateInformation(const void* data, int sizeInBytes) {
+
+  juce::MemoryInputStream memoryInputStream{ data, static_cast<size_t>(sizeInBytes), false };
+
+  const auto result = JsonSerializer::deserialize(memoryInputStream , parameters);
+
+  if (result.failed()) {
+    DBG(result.getErrorMessage());
+  }
+
+  bypassTransitionSmoother.setBypassForced(parameters.bypass.get());
+
 }
 
 // getBypassParameter is a method in the juce AudioProcessor class that we declared in PluginProcessor.h,
