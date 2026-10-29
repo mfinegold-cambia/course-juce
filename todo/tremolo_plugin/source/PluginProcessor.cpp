@@ -171,14 +171,16 @@ void PluginProcessor::getStateInformation(juce::MemoryBlock& destData) {
 
 
   // Host calls this when it wants our Plugin to load and restore its State
+  // Host passes in a pointer to a block of raw Bytes in memory that is our Json State parameters
   // void* is a pointer to a block of raw Bytes in Memory, it doesn't know what type of data those bytes are ( doesn't know if it's float, int, or other type )
+  // But we know that this block represents the JSON state info of our State params
   // Since it's const, we can't modify the memory it points to
   // sizeInBytes is the size of the bytes in Memory that the data  points to
-  // You should use this method to restore your parameters from this memory
 void PluginProcessor::setStateInformation(const void* data, int sizeInBytes) {
 
   juce::MemoryInputStream memoryInputStream{ data, static_cast<size_t>(sizeInBytes), false };
 
+  // We pass the MemoryInputStream containing bytes representing the Json State parameters and get back a juce::Result telling us whether Deserialization succeeded
   const auto result = JsonSerializer::deserialize(memoryInputStream , parameters);
 
   if (result.failed()) {

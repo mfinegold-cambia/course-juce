@@ -13,17 +13,24 @@ namespace tremolo {
 
             template<typename Archive, typename T>
 
-            static void serialize(Archive &archive, T &t) {
+            // This serialise function declaration ( note spelling serialise instead of serialize ) must be included as part of juce::SerialisationTraits in order that the Struct be serialized correctly
+            // Juce spells serialise instead of serialize
+            static void serialise(Archive& archive, T& t) {
                 // We only support a marshallingVersion of 1 right now
                 if (archive.getVersion() != 1) {
                     return;
                 }
-                // The TREMOLO_PLUGIN_NAME var is set in CMakeLists.txt and added to target_compile_definitions, so is available to our C++ code
-                archive(juce::named("pluginName", TREMOLO_PLUGIN_NAME));
 
-                archive(juce::named("modulationRateHz", t.rate()), juce::named("bypass", t.bypass()),
-                        juce::named("modulationWaveform", t.waveform()));
+                // The TREMOLO_PLUGIN_NAME var is set in CMakeLists.txt and added to target_compile_definitions, so is available to our C++ code
+                std::string pluginName = TREMOLO_PLUGIN_NAME;
+
+                // The archive says which member attributes we want to Serialize to the Var object
+                archive(juce::named("pluginName", pluginName));
+
+                archive(juce::named("modulationRateHz", t.rate), juce::named("bypass", t.bypass),
+                        juce::named("modulationWaveform", t.waveform));
             }
+
         }; // end Struct
 
 
@@ -64,6 +71,9 @@ namespace tremolo {
             return;
         }
 
+        // juce JSON::write to stream will serialize a Var object into a JSON text stream
+        // This is saying we want to Dereference the varObj and write it to the output ( MemoryOutputStream )
+        // Once this method finishes, we return control to PluginProcessor.cpp getStateInformation which returns the OutputStream back to the Host - the Host stores this Json text stream as a file in its project
         juce::JSON::writeToStream(output, *varObj, juce::JSON::FormatOptions{}.withSpacing(juce::JSON::Spacing::multiLine).withMaxDecimalPlaces(2));
     }
 
@@ -71,10 +81,37 @@ namespace tremolo {
 
     juce::Result JsonSerializer::deserialize(juce::InputStream &input,
                                              Parameters &parameters) {
-        juce::ignoreUnused(input, parameters);
 
-        // TODO: deserialize parameters from the JSON input stream
+        juce::var parsedResult;
+        // juce JSON::parse gets the input stream of raw bytes (Provided by the Host ) as a text string (which we know is Json ), and loads it into our parsedResult Var object
+        // result is a juce::Result that just tells you whether calling JSON::parse succeeded or not
+        const auto result = juce::JSON::parse(input.readEntireStreamAsString(), parsedResult);
+        // juce::Result
+        if (result.failed()) {
+            return result;
+        }
 
-        return juce::Result::fail("not implemented");
+        // Now we convert the parsedResult Var object back into a SerializableParameters object
+        // The juce FromVar::convert method returns an std::optional of type SerializableParameters
+        const auto parsedParameters = juce::FromVar::convert<SerializableParameters>(parsedResult);
+        // Since parsedParameters is an std::optional, we have to check if the convert operation succeeded or not
+        if (!parsedParameters.has_value()) {
+            return juce::Result::fail("Failed to parse parameters from JSON representation");
+        }
+
+        // so now we know that the SerializableParameters object is valid
+        // So go ahead with getting the SerializableParameters attributes and writing them back to AudioParameterChoice, AudioParameterFloat, and AudioParameterBool objects
+        // The parameters.waveform is an AudioParameterChoice object that has an array of "Sine", "Triangle"
+        // So we find the index of it that matches the SerializableParameters waveform string ( e.g. "Sine", or "Triangle)
+        const auto modulationWaveformIndex = parameters.waveform.choices.indexOf(parsedParameters->waveform);
+        // Now we set the parameters AudioParameterChoice value to the index of the string that we have in the SerializableParameters object
+        parameters.waveform = modulationWaveformIndex;
+
+        // The arrow Dereferences parsedParameters and gets the rate
+        parameters.rate = parsedParameters->rate;
+
+        parameters.bypass = parsedParameters->bypass;
+
+        return juce::Result::ok();
     }
 } // namespace tremolo
