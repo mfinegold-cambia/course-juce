@@ -155,14 +155,15 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor() {
 }
 
 
-// Host calls this when it wants the Plugin to Save its State, usually it's when the user Saves the DAW project or closes the project, but varies by DAW host
-// Host passes a reference to an empty juce MemoryBlock, and we are supposed to populate it with our Plugin State ( as a raw byte array )
-// After we populate the MemoryBlock, the DAW host takes the populated MemoryBlock destData and stores the data in its DAW project file ( we don't store it in our Plugin )
-void PluginProcessor::getStateInformation(juce::MemoryBlock& destData) {
+// Host calls this when it wants the Plugin get its State values so it can store them with the DAW project, usually it's when the user Saves the DAW project or closes the project, but varies by DAW host
+// Host passes a reference to an EMPTY juce MemoryBlock, and we are supposed to populate it with our Plugin State ( as a raw byte array )
+// After we populate the MemoryBlock, the DAW host takes the populated MemoryBlock  and stores the data in its DAW project file ( we don't store it in our Plugin )
+  // Juce passes juce MemoryBlock as a reference instead of pointer as a good design decision since a ref can't be null.  If they passed it as a Pointer, we'd have to check if it's a nullptr
+void PluginProcessor::getStateInformation(juce::MemoryBlock& memoryBlock) {
 
-  // Creates an OutputStream for writing into the destData MemoryBlock
+  // Creates an OutputStream that will write into the memoryBlock
   // The MemoryOutputStream at this points as the empty MemoryBlock, the "true" means we will Append data to the existing MemoryBlock ( instead of overwriting what's in there )
-  juce::MemoryOutputStream memoryOutputStream(destData, true);
+  juce::MemoryOutputStream memoryOutputStream(memoryBlock, true);
 
   // We pass a reference to the Parameters Struct and the MemoryOutputStream we created ( which is an concrete impl of the abstract juce OutputStream )
   // Note that serialize is a static method so we can directoly instead of having to create an instance of JsonSerializer first
@@ -170,12 +171,12 @@ void PluginProcessor::getStateInformation(juce::MemoryBlock& destData) {
 }
 
 
-  // Host calls this when it wants our Plugin to load and restore its State
-  // Host passes in a pointer to a block of raw Bytes in memory that is our Json State parameters
-  // void* is a pointer to a block of raw Bytes in Memory, it doesn't know what type of data those bytes are ( doesn't know if it's float, int, or other type )
-  // But we know that this block represents the JSON state info of our State params
+
+  // Host calls this when the User opens our Plugin, and the Host wants our Plugin to restore our AudioParameterFloat/Bool/Choice State objects to the json passed in the data arg
+  // Host passes in a pointer to a FULL block of raw Bytes in memory that is our Json State parameters
+  // void* is a pointer to a block of raw Bytes in Memory, we know that this block of bytes represents the JSON state info of our State params
   // Since it's const, we can't modify the memory it points to
-  // sizeInBytes is the size of the bytes in Memory that the data  points to
+  // sizeInBytes is the size of the bytes in Memory that the data points to
 void PluginProcessor::setStateInformation(const void* data, int sizeInBytes) {
 
   juce::MemoryInputStream memoryInputStream{ data, static_cast<size_t>(sizeInBytes), false };
